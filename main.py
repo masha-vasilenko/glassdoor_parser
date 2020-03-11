@@ -2,6 +2,11 @@ import selenium
 from selenium import webdriver
 import json
 
+import requests
+import time
+import random
+from bs4 import BeautifulSoup
+
 
 def main():
     print(selenium.__version__)
@@ -14,6 +19,21 @@ def gd_login(driver, email, pwd):
     pwdfield.send_keys(pwd)
     pwdfield.submit()
 
+
+def fetch(url, delay =(1,3)):
+    """Simulate random human clicking
+    Fetch the page source and return html object"""
+
+    time.sleep(random.randint(delay[0],delay[1]))
+    try:
+        response = requests.get(url, headers={'User-Agent': "Resistance is futile"})
+    except ValueError as e:
+        print(str(e))
+        return '',BeautifulSoup('','html.parser')
+    html = response.text
+    soup = BeautifulSoup(html, 'html.parser')
+
+    return (html,soup)
 
 driver_path = '/usr/local/bin/chromedriver'
 login_url = 'https://www.glassdoor.com/profile/login_input.htm'
@@ -33,6 +53,12 @@ driver.implicitly_wait(100)
 # Log into account
 gd_login(driver, email, pwd)
 
+html,soup = fetch("https://www.glassdoor.com/Interview/Coursera-Interview-Questions-E654749.htm")
+
+#print(type(html))
+
+with open("result.html", "w") as file:
+    file.write(html)
 
 # Quit the driver
 driver.quit()
