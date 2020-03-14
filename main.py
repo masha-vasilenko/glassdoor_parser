@@ -25,15 +25,11 @@ def fetch(url, delay =(1,3)):
     Fetch the page source and return html object"""
 
     time.sleep(random.randint(delay[0],delay[1]))
-    try:
-        response = requests.get(url, headers={'User-Agent': "Resistance is futile"})
-    except ValueError as e:
-        print(str(e))
-        return '',BeautifulSoup('','html.parser')
-    html = response.text
-    soup = BeautifulSoup(html, 'html.parser')
+    driver.get(url)
+    html = driver.page_source
 
-    return (html,soup)
+
+    return html
 
 driver_path = '/usr/local/bin/chromedriver'
 login_url = 'https://www.glassdoor.com/profile/login_input.htm'
@@ -53,12 +49,13 @@ driver.implicitly_wait(100)
 # Log into account
 gd_login(driver, email, pwd)
 
-html,soup = fetch("https://www.glassdoor.com/Interview/Coursera-Interview-Questions-E654749.htm")
+URL_TO_FETCH = "https://www.glassdoor.com/Interview/Coursera-Interview-Questions-E654749.htm"
+html = fetch(URL_TO_FETCH)
 
 #print(type(html))
 
 with open("result.html", "w") as file:
-    file.write(html)
+   file.write(html)
 
 # Quit the driver
 driver.quit()
