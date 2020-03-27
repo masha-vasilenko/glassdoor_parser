@@ -7,17 +7,13 @@ with open('result.html') as f:
 soup = BeautifulSoup(html, features="html.parser")
 
 # Get roles to which reviewers applied
-for review in soup.select("li.empReview.cf"):
-    header = review.select("h2.summary.strong.noMargTop.tightTop.margBotXs")[0]
-    print(header.text)
-
 final_results = []
 for review in soup.select("li.empReview.cf"):
-    data_collected = {"role": [], "offer": None, "impression": None, "interview_difficulty": None}
+    data_collected = {"role": [], "offer": None, "impression": None, "interview_difficulty": None,
+                      "application": None, "interview": None, "interview_questions": None}
     # Get role
     role = review.select("h2.summary.strong.noMargTop.tightTop.margBotXs")[0]
     data_collected["role"] = role.text
-    final_results.append(data_collected)
 
     # Impressions
     outcomes = review.select(".interviewOutcomes")
@@ -27,7 +23,7 @@ for review in soup.select("li.empReview.cf"):
         for elem in middle_panel:
             if list((elem.select("span", class_="middle"))) != []:
                 el = elem.select("span", class_="middle")[0].text
-                print(el)
+                # print(el)
                 line.append(el)
         try:
             if "Offer" in line[0]:
@@ -45,5 +41,28 @@ for review in soup.select("li.empReview.cf"):
                 data_collected["interview_difficulty"] = line[2]
         except:
             pass
+
+    # Interview Application
+    try:
+        application = review.select("p.applicationDetails.continueReading")[0]
+    except:
+        pass
+    data_collected["application"] = application.text
+
+    # Interview Details
+    try:
+        interview = review.select("p.interviewDetails.continueReading")[0]
+    except:
+        pass
+    data_collected["interview"] = interview.text
+
+    # Interview Questions
+    try:
+        questions = review.select(".interviewQuestion.noPadVert.truncateThis.wrapToggleStr")[0]
+    except:
+        pass
+    data_collected["interview_questions"] = questions.text
+
+    final_results.append(data_collected)
 
 print(final_results)
