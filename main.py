@@ -3,6 +3,7 @@ from selenium import webdriver
 import json
 import time
 import random
+from parse_html import *
 
 
 
@@ -54,9 +55,14 @@ gd_login(driver,email,pwd)
 URL_TO_FETCH = "https://www.glassdoor.com/Interview/Coursera-Interview-Questions-E654749.htm"
 html = fetch(URL_TO_FETCH, driver)
 
+
 with open("result.html", "w") as file:
    file.write(html)
 
+interview_reviews = parse_html(html)
+
+with open("interview_reviews.json", "w") as fp:
+    json.dump(interview_reviews, fp)
 # Quit the driver
 driver.quit()
 
