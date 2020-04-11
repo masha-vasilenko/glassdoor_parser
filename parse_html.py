@@ -7,9 +7,8 @@ def get_soup(html):
     soup = BeautifulSoup(html, features="html.parser")
     return soup
 
-def parse_html(html):
-    '''Parse HTML page and collect the reviews'''
-    soup = get_soup(html)
+def parse_html(soup):
+    """Parse HTML page and collect the reviews"""
 
     # Get roles to which reviewers applied
     final_results = []
@@ -73,17 +72,24 @@ def parse_html(html):
     return final_results
 
 
-def get_links(html):
-    soup=get_soup(html)
-    links = []
-    for l in soup.find_all(class_="page"):
-
-        for link in l.find_all('a'):
-            try:
-                links.append(link.get('href')))
-                except:pass
-    return links
-
-
+def get_next_page(soup):
+    """Get the next page with reviews to parse"""
+    next_page = None
+    disabled = 0
+    for l in soup.find_all(class_="next"):
+        try:
+            for dis in l.find_all(class_="disabled"):
+                disabled = len(dis.text)
+                next_page = None
+        except:
+            pass
+        if disabled == 0:
+            for link in l.find_all("a"):
+                next_page = link.get('href')
+                next_page = "http://www.glassdoor.com" + next_page.strip()
+        else:
+            # print(disabled)
+            next_page = None
+    return next_page
 
 
