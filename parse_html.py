@@ -1,11 +1,13 @@
 from bs4 import BeautifulSoup
 
-with open('result.html') as f:
-    html = f.read()
+# TODO: Refactor parse_html, consider splitting into smaller functions
+# TODO: Think about try..except, does it really protect from failing, also except should catch particular case
+
 
 def get_soup(html):
     soup = BeautifulSoup(html, features="html.parser")
     return soup
+
 
 def parse_html(soup):
     """Parse HTML page and collect the reviews"""
@@ -25,7 +27,7 @@ def parse_html(soup):
             middle_panel = out.select(".middle")
             line = []
             for elem in middle_panel:
-                if list((elem.select("span", class_="middle"))) != []:
+                if list((elem.select("span", class_="middle"))):
                     el = elem.select("span", class_="middle")[0].text
                     # print(el)
                     line.append(el)
@@ -88,7 +90,6 @@ def get_next_page(soup):
                 next_page = link.get('href')
                 next_page = "http://www.glassdoor.com" + next_page.strip()
         else:
-            # print(disabled)
             next_page = None
     return next_page
 

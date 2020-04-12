@@ -1,3 +1,5 @@
 /.idea
+chromedriver
 secret.json
 result.html
+reviews.json
