@@ -8,7 +8,7 @@ LOGIN_URL = 'https://www.glassdoor.com/profile/login_input.htm'
 URL_TO_FETCH = "https://www.glassdoor.com/Interview/Coursera-Interview-Questions-E654749.htm"
 
 # TODO: Use logger instead of print statements
-# TODO: Add to reviews: date, helpful score
+
 
 
 def main():
