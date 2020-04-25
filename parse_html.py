@@ -37,20 +37,31 @@ def get_impressions_from_review(review):
                 el = elem.select("span", class_="middle")[0].text
                 # print(el)
                 line.append(el)
-        if "Offer" in line[0]:
-            data_collected["offer"] = line[0]
-        else:
+
+        try:
+            if "Offer" in line[0]:
+                data_collected["offer"] = line[0]
+            else:
+                data_collected["offer"] = ""
+        except IndexError:
             data_collected["offer"] = ""
 
-        if "Experience" in line[1]:
-            data_collected["impression"] = line[1]
-        else:
+        try:
+            if "Experience" in line[1]:
+                data_collected["impression"] = line[1]
+            else:
+                data_collected["impression"] = ""
+        except IndexError:
             data_collected["impression"] = ""
 
-        if "Interview" in line[2]:
-            data_collected["interview_difficulty"] = line[2]
-        else:
+        try:
+            if "Interview" in line[2]:
+                data_collected["interview_difficulty"] = line[2]
+            else:
+                data_collected["interview_difficulty"] = ""
+        except IndexError:
             data_collected["interview_difficulty"] = ""
+
     return data_collected
 
 
@@ -58,10 +69,13 @@ def get_interview_application_process(review):
     "Given the soup element review, return the info about application process "
 
     data_collected = {"application": None}
-    if review.select("p.applicationDetails.continueReading")[0]:
-        application = review.select("p.applicationDetails.continueReading")[0]
-        data_collected["application"] = application.text
-    else:
+    try:
+        if  review.select("p.applicationDetails.continueReading")[0]:
+            application = review.select("p.applicationDetails.continueReading")[0]
+            data_collected["application"] = application.text
+        else:
+            data_collected["application"] = ""
+    except IndexError:
         data_collected["application"] = ""
     return data_collected
 
@@ -70,24 +84,27 @@ def get_interview_details(review):
     "Given the soup element review, return the info about application process "
 
     data_collected = {"interview": None}
-
-    if review.select("p.interviewDetails.continueReading")[0]:
-        interview = review.select("p.interviewDetails.continueReading")[0]
-        data_collected["interview"] = interview.text
-    else:
+    try:
+        if review.select("p.interviewDetails.continueReading")[0]:
+            interview = review.select("p.interviewDetails.continueReading")[0]
+            data_collected["interview"] = interview.text
+        else:
+            data_collected["interview"] = ""
+    except IndexError:
         data_collected["interview"] = ""
     return data_collected
 
 
 def get_interview_questions(review):
     data_collected = {"interview_questions": None}
-
-    if review.select(".interviewQuestion.noPadVert.truncateThis.wrapToggleStr")[0]:
-        questions = review.select(".interviewQuestion.noPadVert.truncateThis.wrapToggleStr")[0]
-        data_collected["interview_questions"] = questions.text
-    else:
+    try:
+        if review.select(".interviewQuestion.noPadVert.truncateThis.wrapToggleStr")[0]:
+            questions = review.select(".interviewQuestion.noPadVert.truncateThis.wrapToggleStr")[0]
+            data_collected["interview_questions"] = questions.text
+        else:
+            data_collected["interview_questions"] = ""
+    except IndexError:
         data_collected["interview_questions"] = ""
-
     return data_collected
 
 
