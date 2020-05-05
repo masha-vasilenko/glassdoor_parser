@@ -2,6 +2,8 @@ from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 import json
 import time
+import logging
+import logging.config
 from parse_html import *
 
 LOGIN_URL = 'https://www.glassdoor.com/profile/login_input.htm'
@@ -28,9 +30,27 @@ def main():
     reviews = []
     next_page = URL_TO_FETCH
 
+    # create logger
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+
+    # create console handler and set level to debug
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+
+    #add formatter to ch
+    formatter = logging.Formatter(
+        '%(asctime)s - %(levelname)s - %(lineno)d - %(filename) - s(%(process)d) - %(message)s')
+
+    # add formatter to ch
+    ch.setFormatter(formatter)
+
+    # add ch to logger
+    logger.addHandler(ch)
+    logging.getLogger('selenium').setLevel(logging.CRITICAL)
+
     while next_page:
-        driver.get(next_page)
-        html = driver.page_source
+        html = fetch(next_page, driver)
         soup = get_soup(html)
         reviews.extend(parse_html(soup))
         next_page = get_next_page(soup)
