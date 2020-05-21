@@ -48,16 +48,15 @@ def get_next_page(doc):
     return next_page_link[0] if next_page_link else None
 
 
-def gd_login(driver, email, pwd):
+def gd_login(driver, login_url, email, pwd):
+
     # Given the driver and credentials, login
-    email_field = driver.find_element_by_xpath(
-        "//div[@class=' css-1ohf0ui']//div[@class='css-q444d9']//input[1]"
-    )
+    driver.get(login_url)
+    email_field = driver.find_element_by_xpath("//*[@type='submit']//preceding::input[2]")
     email_field.send_keys(email)
     pwd_field = driver.find_element_by_xpath(
-        "//div[@class='mt-xsm']//div[@class=' css-1ohf0ui']//div[@class='css-q444d9']//input[1]"
+        "//*[@type='submit']//preceding::input[1]"
     )
     pwd_field.send_keys(pwd)
     pwd_field.submit()
-    # TODO: Change to explicit wait
     time.sleep(3)
