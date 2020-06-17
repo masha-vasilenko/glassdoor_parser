@@ -11,7 +11,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger('root')
@@ -21,7 +21,7 @@ LOGIN_URL = urljoin(BASE_URL, 'profile/login_input.htm')
 DEFAULT_LOCATION = 'San Francisco, CA'
 DELAY = 20
 
-companies_list = ['stripe', 'workspan']
+companies_list = ['coursera', 'workspan']
 
 
 def main():
@@ -45,10 +45,14 @@ def main():
 
     for company in companies_list:
 
-        element = WebDriverWait(driver, DELAY).until(
-            EC.visibility_of_element_located((By.XPATH, "//a[@href='/Reviews/index.htm']"))
-        )
-        element.click()
+        try:
+            element = WebDriverWait(driver, DELAY).until(
+                EC.visibility_of_element_located((By.XPATH, "//a[@href='/Reviews/index.htm']"))
+            )
+            element.click()
+        except StaleElementReferenceException as e:
+            print(e)
+            pass
 
         # Enter location
         location_input = None
@@ -114,35 +118,91 @@ def main():
             driver.quit()
             return
 
-        next_page = interviews_link.get_attribute('href')
+        first_page = interviews_link.get_attribute('href')
+        driver.get(urljoin(BASE_URL, first_page))
 
-        # Collect reviews
+        try:
+            WebDriverWait(driver, DELAY).until(
+                EC.visibility_of_element_located((By.XPATH, "//*[@class='sorts']"))
+            )
+            driver.find_element_by_xpath(
+                '//*[@class="sorts"]/option[2]').click()
+        except StaleElementReferenceException as e:
+            print(e)
+
         reviews = []
-        pages = 3
-        page = 0
-        while next_page and page < pages:
+        cut_date = "2019-06-01"
+
+        # Collect reviews from the first page
+        try:
+            WebDriverWait(driver, 10).until(
+                EC.visibility_of_element_located((By.XPATH, "//*[@class=' empReview cf ']"))
+            )
+            doc = etree.HTML(driver.page_source)
+            data, flag_stop = get_reviews(doc, company, cut_date)
+            reviews.extend(data)
+
+            with open("reviews.json", "a") as f:
+                json.dump(reviews, f, indent=4)
+
+            for review in data:
+                r = requests.post('https://gdreviews.herokuapp.com/api/reviews/', json=review)
+                if r.status_code == 201:
+                    logger.info(f"Success: {review['company']} - {review['role']}")
+                else:
+                    logger.error(f"Failure: {r.status_code} - {r.text} {review['company']}")
+            if not flag_stop:
+                next_page = get_next_page(doc)
+            else:
+                next_page = None
+
+            logger.info(f'collected reviews from the first page: {driver.current_url}')
+            print(next_page)
+        except TimeoutException:
+            logger.error(f'Not able to load interview reviews. Exiting...')
+            driver.quit()
+            return
+
+        # Collect the rest of the reviews
+        page = 1
+        while next_page: # and page < pages:
             url = urljoin(BASE_URL, next_page)
             logger.info(f'Current page: {url}')
             driver.get(url)
             doc = etree.HTML(driver.page_source)
-            data = get_reviews(doc, company)
+            data, flag_stop = get_reviews(doc, company, cut_date)
             reviews.extend(data)
-            next_page = get_next_page(doc)
-            page += 1
 
-        preprocess(reviews)
+            with open("reviews.json", "a") as f:
+                json.dump(reviews, f, indent=4)
+
+            for review in data:
+                r = requests.post('https://gdreviews.herokuapp.com/api/reviews/', json=review)
+                if r.status_code == 201:
+                    logger.info(f"Success: {review['company']} - {review['role']}")
+                else:
+                    logger.error(f"Failure: {r.status_code} - {r.text} {review['company']}")
+            if not flag_stop:
+                next_page = get_next_page(doc)
+                page += 1
+            else:
+                next_page = None
+
         results.extend(reviews)
-
+        logger.info(f'Finished with the {company}')
+    '''
     for result in results:
         r = requests.post('https://gdreviews.herokuapp.com/api/reviews/', json=result)
         if r.status_code == 201:
             logger.info(f"Success: {result['company']} - {result['role']}")
         else:
             logger.error(f"Failure: {r.status_code} - {r.text} {result['company']}")
-
+            
+    '''
+    '''
     with open("reviews.json", "a") as f:
         json.dump(results, f, indent=4)
-
+    '''
     driver.quit()
 
 

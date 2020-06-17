@@ -1,38 +1,50 @@
 import logging
 import logging.config
+import datetime
 from lxml import etree
 import time
 import nltk
 import string
+from datetime import datetime
+
 
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger('parser')
 
 
-def get_reviews(doc, company):
-    results = []
-    reviews = doc.cssselect("li.empReview.cf")
-    get_role = etree.XPath(f".//span[{_klass('reviewer')}]/text()")
-    get_date = etree.XPath(".//time/@datetime")
-    get_helpful = etree.XPath(f".//span[{_klass('helpfulCount')}]/text()")
-    get_outcomes = etree.XPath(f".//div[{_klass('interviewOutcomes')}]//span/text()")
-    get_application = etree.XPath(f".//p[{_klass('applicationDetails')}]/text()")
-    get_interview = etree.XPath(f".//p[{_klass('interviewDetails')}]/text()")
-    get_questions = etree.XPath(f".//div[{_klass('interviewQuestions')}]//span[{_klass('interviewQuestion')}]/text()")
+def get_reviews(doc, company, cut_date):
+        results = []
+        reviews = doc.cssselect("li.empReview.cf")
+        get_role = etree.XPath(f".//span[{_klass('reviewer')}]/text()")
+        get_date = etree.XPath(".//time/@datetime")
+        get_helpful = etree.XPath(f".//span[{_klass('helpfulCount')}]/text()")
+        get_outcomes = etree.XPath(f".//div[{_klass('interviewOutcomes')}]//span/text()")
+        get_application = etree.XPath(f".//p[{_klass('applicationDetails')}]/text()")
+        get_interview = etree.XPath(f".//p[{_klass('interviewDetails')}]/text()")
+        get_questions = etree.XPath(f".//div[{_klass('interviewQuestions')}]//span[{_klass('interviewQuestion')}]/text()")
 
-    for review in reviews:
-        data = {
-            'role': (get_role(review) or [None])[0],
-            'date': (get_date(review) or [None])[0],
-            'helpful': (get_helpful(review) or [None])[0],
-            'outcomes': get_outcomes(review),
-            'application': (get_application(review) or [None])[0],
-            'details': (get_interview(review) or [None])[0],
-            'questions': get_questions(review),
-            'company': company,
-        }
-        results.append(data)
-    return results
+        for review in reviews:
+                data = {
+                    'role': (get_role(review) or [None])[0],
+                    'review_date': (get_date(review) or [None])[0],
+                    'helpful': (get_helpful(review) or [None])[0],
+                    'outcomes': get_outcomes(review),
+                    'application': (get_application(review) or [None])[0],
+                    'details': (get_interview(review) or [None])[0],
+                    'questions': get_questions(review),
+                    'company': company,
+                }
+
+                if data["review_date"] is None or datetime.strptime(data["review_date"], '%Y-%m-%d') > \
+                        datetime.strptime(cut_date, '%Y-%m-%d'):
+                    results.append(data)
+                    logger.info(
+                        f"review date: {data['review_date']} and role: {data['role']}")
+                    flag_stop = False
+                else:
+                    flag_stop = True
+                    return results, flag_stop
+        return results, flag_stop
 
 
 def _klass(klass):
@@ -98,7 +110,8 @@ def get_word_distance(target, word):
 def preprocess(reviews):
     for review in reviews:
         try:
-            review['helpful'] = int(''.join([c for c in review['helpful'] if c in string.digits]))
+            review['helpful'] = int(''.join([c for c in review['helpful']
+                                             if c in string.digits]))
         except TypeError:
             review['helpful'] = None
         except ValueError:
@@ -112,6 +125,15 @@ def preprocess(reviews):
             review['accepted'] = ''
             review['experience'] = ''
             review['difficulty'] = ''
+
+        if review['application'] is None:
+            review['application'] = ''
+
+        if review['role'] is None:
+            review['role'] = ''
+
+        if review['company'] is None:
+            review['company'] = ''
 
         questions_pr = []
         for question in review.get('questions', []):
