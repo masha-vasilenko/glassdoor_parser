@@ -26,8 +26,8 @@ companies_list = []
 with open('companies.json') as f:
     companies = json.load(f)
 
-for company in companies['companies'].split(','):
-    companies_list.append(company)
+for comp in companies['companies'].split(','):
+    companies_list.append(comp)
 
 
 def main():
@@ -50,7 +50,6 @@ def main():
     results = []
 
     for company in companies_list:
-
         try:
             element = WebDriverWait(driver, DELAY).until(
                 EC.visibility_of_element_located((By.XPATH, "//a[@href='/Reviews/index.htm']"))
@@ -112,8 +111,9 @@ def main():
             driver.get(company_url)
         else:
             logger.error(f'Not able to find company URL. Exiting...')
-            driver.quit()
-            return
+            continue
+            #driver.quit()
+            #return
 
         # Getting to interviews reviews
         try:
@@ -122,8 +122,9 @@ def main():
             )
         except TimeoutException:
             logger.error(f'Not able to find interview reviews link. Exiting...')
-            driver.quit()
-            return
+            continue
+            #driver.quit()
+            #return
 
         first_page = interviews_link.get_attribute('href')
         driver.get(urljoin(BASE_URL, first_page))
