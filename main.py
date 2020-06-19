@@ -168,8 +168,9 @@ def main():
             print(next_page)
         except TimeoutException:
             logger.error(f'Not able to load interview reviews. Exiting...')
-            driver.quit()
-            return
+            continue
+            #driver.quit()
+            #return
 
         # Collect the rest of the reviews
         page = 1
@@ -185,17 +186,20 @@ def main():
             with open("reviews.json", "a") as f:
                 json.dump(reviews, f, indent=4)
 
-            for review in data:
-                r = requests.post('https://gdreviews.herokuapp.com/api/reviews/', json=review)
-                if r.status_code == 201:
-                    logger.info(f"Success: {review['company']} - {review['role']}")
+            try:
+                for review in data:
+                    r = requests.post('https://gdreviews.herokuapp.com/api/reviews/', json=review)
+                    if r.status_code == 201:
+                        logger.info(f"Success: {review['company']} - {review['role']}")
+                    else:
+                        logger.error(f"Failure: {r.status_code} - {r.text} {review['company']}")
+                if not flag_stop:
+                    next_page = get_next_page(doc)
+                    page += 1
                 else:
-                    logger.error(f"Failure: {r.status_code} - {r.text} {review['company']}")
-            if not flag_stop:
-                next_page = get_next_page(doc)
-                page += 1
-            else:
-                next_page = None
+                    next_page = None
+            except ConnectionError:
+                pass
 
         results.extend(reviews)
         logger.info(f'Finished with the {company}')
