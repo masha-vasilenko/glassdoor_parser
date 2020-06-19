@@ -5,4 +5,4 @@
 5. Write to file after fetching each review page DONE
 6. Send requests after fetching each review page  DONE
 7. Create a log file after each fetch job with datetime in the filename.
-8. Companies list in a separate JSON file
+8. Companies list in a separate JSON file DONE

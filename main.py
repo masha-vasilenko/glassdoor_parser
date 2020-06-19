@@ -21,7 +21,13 @@ LOGIN_URL = urljoin(BASE_URL, 'profile/login_input.htm')
 DEFAULT_LOCATION = 'San Francisco, CA'
 DELAY = 20
 
-companies_list = ['coursera', 'workspan']
+# Get the names of companies:
+companies_list = []
+with open('companies.json') as f:
+    companies = json.load(f)
+
+for company in companies['companies'].split(','):
+    companies_list.append(company)
 
 
 def main():
@@ -109,6 +115,7 @@ def main():
             driver.quit()
             return
 
+        # Getting to interviews reviews
         try:
             interviews_link = WebDriverWait(driver, DELAY).until(
                 EC.visibility_of_element_located((By.XPATH, "//a[@class='eiCell cell interviews ']"))
@@ -121,6 +128,7 @@ def main():
         first_page = interviews_link.get_attribute('href')
         driver.get(urljoin(BASE_URL, first_page))
 
+        # Sorting reviews by date
         try:
             WebDriverWait(driver, DELAY).until(
                 EC.visibility_of_element_located((By.XPATH, "//*[@class='sorts']"))
@@ -140,8 +148,8 @@ def main():
             )
             doc = etree.HTML(driver.page_source)
             data, flag_stop = get_reviews(doc, company, cut_date)
+            preprocess(data)
             reviews.extend(data)
-
             with open("reviews.json", "a") as f:
                 json.dump(reviews, f, indent=4)
 
@@ -171,6 +179,7 @@ def main():
             driver.get(url)
             doc = etree.HTML(driver.page_source)
             data, flag_stop = get_reviews(doc, company, cut_date)
+            preprocess(data)
             reviews.extend(data)
 
             with open("reviews.json", "a") as f:
@@ -190,19 +199,7 @@ def main():
 
         results.extend(reviews)
         logger.info(f'Finished with the {company}')
-    '''
-    for result in results:
-        r = requests.post('https://gdreviews.herokuapp.com/api/reviews/', json=result)
-        if r.status_code == 201:
-            logger.info(f"Success: {result['company']} - {result['role']}")
-        else:
-            logger.error(f"Failure: {r.status_code} - {r.text} {result['company']}")
-            
-    '''
-    '''
-    with open("reviews.json", "a") as f:
-        json.dump(results, f, indent=4)
-    '''
+
     driver.quit()
 
 
