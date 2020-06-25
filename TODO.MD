@@ -6,3 +6,5 @@
 6. Send requests after fetching each review page  DONE
 7. Create a log file after each fetch job with datetime in the filename.
 8. Companies list in a separate JSON file DONE
+9. Add company urls! - Fix the scraper and API model
+10. Add functionlaity to check the companies in the 
